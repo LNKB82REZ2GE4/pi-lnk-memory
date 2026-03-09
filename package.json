@@ -1,0 +1,40 @@
+{
+  "name": "pi-lnk-memory",
+  "version": "0.1.0",
+  "description": "Hybrid cross-session memory extension for Pi coding agent (lexical + Qdrant vectors + global memory)",
+  "type": "module",
+  "keywords": [
+    "pi-package",
+    "pi",
+    "pi-coding-agent",
+    "extension",
+    "memory",
+    "qdrant",
+    "ollama"
+  ],
+  "license": "MIT",
+  "pi": {
+    "extensions": [
+      "./index.ts"
+    ]
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test test/**/*.test.ts",
+    "gateway:smoke": "node --import tsx scripts/local-gateway-smoke.ts",
+    "gateway:push-smoke": "node --import tsx scripts/local-gateway-push-smoke.ts"
+  },
+  "dependencies": {
+    "@grpc/grpc-js": "^1.14.0",
+    "@grpc/proto-loader": "^0.8.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.8.0"
+  },
+  "peerDependencies": {
+    "@mariozechner/pi-agent-core": "*",
+    "@mariozechner/pi-coding-agent": "*"
+  }
+}

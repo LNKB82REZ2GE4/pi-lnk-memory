@@ -1,0 +1,6 @@
+PLAN.md
+node_modules/
+test/
+*.log
+*.tgz
+.DS_Store
