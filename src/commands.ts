@@ -20,6 +20,8 @@ export interface CommandHandlers {
   gatewaySubscribe: (args?: string) => Promise<string>;
   gatewayUnsubscribe: () => Promise<string>;
   gatewaySmoke: (args?: string) => Promise<string>;
+  durableStore: (text: string) => Promise<string>;
+  durableRecall: (query: string) => Promise<string>;
 }
 
 export function registerCommands(pi: ExtensionAPI, handlers: CommandHandlers): void {
@@ -210,6 +212,38 @@ export function registerCommands(pi: ExtensionAPI, handlers: CommandHandlers): v
     description: "Run a local Pi RPC smoke test using the gateway worker. Optional arg: plain|memory",
     handler: async (args, ctx) => {
       const result = await handlers.gatewaySmoke(args?.trim());
+      if (ctx.hasUI) ctx.ui.notify(result, "info");
+      else console.log(result);
+    },
+  });
+
+  pi.registerCommand("lnk-memory-durable-store", {
+    description: "Store a durable memory directly through the broker/Muninn write path",
+    handler: async (args, ctx) => {
+      const text = args?.trim();
+      if (!text) {
+        const help = "Usage: /lnk-memory-durable-store <text>";
+        if (ctx.hasUI) ctx.ui.notify(help, "warning");
+        else console.log(help);
+        return;
+      }
+      const result = await handlers.durableStore(text);
+      if (ctx.hasUI) ctx.ui.notify(result, "info");
+      else console.log(result);
+    },
+  });
+
+  pi.registerCommand("lnk-memory-durable-recall", {
+    description: "Recall durable memory directly through the broker/Muninn activation path",
+    handler: async (args, ctx) => {
+      const query = args?.trim();
+      if (!query) {
+        const help = "Usage: /lnk-memory-durable-recall <query>";
+        if (ctx.hasUI) ctx.ui.notify(help, "warning");
+        else console.log(help);
+        return;
+      }
+      const result = await handlers.durableRecall(query);
       if (ctx.hasUI) ctx.ui.notify(result, "info");
       else console.log(result);
     },

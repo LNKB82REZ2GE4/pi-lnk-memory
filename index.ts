@@ -148,6 +148,64 @@ export default function activate(pi: ExtensionAPI): void {
     return out;
   };
 
+  const durableStoreText = async (text: string): Promise<string> => {
+    const content = text.trim();
+    if (!content) return "durable store failed: empty content";
+
+    const conceptBase = content
+      .split(/[.!?\n]/, 1)[0]
+      .trim()
+      .replace(/\s+/g, " ");
+    const concept = conceptBase.slice(0, 80) || content.slice(0, 80);
+
+    const result = await broker.rememberBatch([
+      {
+        concept,
+        content,
+        typeLabel: "pi_durable_note",
+        tags: ["pi", "lnk-memory", "manual-store"],
+        confidence: 0.95,
+      },
+    ]);
+
+    const first = result.results[0];
+    if (!first || first.status !== "ok") {
+      return [
+        "durable store failed",
+        `transport=${result.transport}`,
+        `error=${first?.error ?? "unknown error"}`,
+      ].join(" | ");
+    }
+
+    return [
+      "durable stored",
+      `transport=${result.transport}`,
+      `id=${first.id ?? "unknown"}`,
+      `concept=${concept}`,
+    ].join(" | ");
+  };
+
+  const durableRecallText = async (query: string): Promise<string> => {
+    const hybrid = await broker.activateHybrid({
+      query,
+      transcript: { candidates: [], injectedText: "", confidence: 0 },
+      scope: { mode: "local" },
+    });
+
+    if (hybrid.durable.activations.length === 0) {
+      return `durable recall: no hits | transport=${hybrid.durable.transport}`;
+    }
+
+    const lines = hybrid.durable.activations.slice(0, 5).map((item, index) => (
+      `${index + 1}. score=${item.score.toFixed(3)} concept=${item.concept} :: ${item.content.replace(/\s+/g, " ").slice(0, 200)}`
+    ));
+
+    return [
+      `durable recall hits=${hybrid.durable.activations.length} | transport=${hybrid.durable.transport}`,
+      ...lines,
+    ].join("\n");
+  };
+
   const gatewayStatusText = async (): Promise<string> => {
     const status = await gateway.getStatus();
     const workerId = localGateway.getDefaultWorkerId() ?? "none";
@@ -355,6 +413,8 @@ export default function activate(pi: ExtensionAPI): void {
         result.stderrTail?.trim() ? `stderrTail=${result.stderrTail.replace(/\s+/g, " ").slice(-240)}` : undefined,
       ].filter(Boolean).join("\n");
     },
+    durableStore: durableStoreText,
+    durableRecall: durableRecallText,
   });
 
   pi.on("session_start", async (_event, ctx) => {
